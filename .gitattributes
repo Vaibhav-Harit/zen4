@@ -1,0 +1,13 @@
+# Force shell scripts to always use LF (Linux) line endings
+*.sh text eol=lf
+
+# Handle other text files automatically
+*.py text
+*.js text
+*.jsx text
+*.tsx text
+*.css text
+*.html text
+*.json text
+*.yml text
+*.yaml text

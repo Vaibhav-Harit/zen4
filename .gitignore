@@ -1,0 +1,24 @@
+# Prerequisites
+node_modules/
+.venv/
+env/
+venv/
+ENV/
+
+# Secrets
+.env
+
+# Build outputs
+dist/
+build/
+*.pyc
+__pycache__/
+
+# Databases
+db.sqlite3
+postgres_data/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
