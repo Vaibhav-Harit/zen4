@@ -8,6 +8,12 @@ const LOGIN_SCENE_URL =
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(true);
+  const handleGithubLogin = () => {
+    window.location.href =
+      "https://github.com/login/oauth/authorize?client_id=" +
+      import.meta.env.VITE_GITHUB_CLIENT_ID +
+      "&redirect_uri=http://localhost:5173/auth/callback";
+  };
 
   return (
     <section className="relative h-screen w-full overflow-hidden">
@@ -37,6 +43,7 @@ export default function Login() {
           </p>
           <button
             type="button"
+            onClick={handleGithubLogin}
             className="w-full flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]"
           >
             <Github className="h-5 w-5" />
