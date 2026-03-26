@@ -18,6 +18,8 @@ class GitHubCallbackView(APIView):
         client_id = os.environ.get('GITHUB_CLIENT_ID')
         client_secret = os.environ.get('GITHUB_CLIENT_SECRET')
 
+        print(f"[GITHUB OAUTH_DEBUG] Client ID present: {bool(client_id)} | Client Secret present: {bool(client_secret)}")
+
         token_response = requests.post(
             'https://github.com/login/oauth/access_token',
             data={
@@ -28,10 +30,20 @@ class GitHubCallbackView(APIView):
             headers={'Accept': 'application/json'}
         )
 
-        if not token_response.ok:
-            return Response({'error': 'Failed to exchange token'}, status=400)
+        try:
+            token_data = token_response.json()
+            print(f"[GITHUB OAUTH_DEBUG] Raw JSON Response: {token_data}")
+        except Exception:
+            print(f"[GITHUB OAUTH_DEBUG] Non-JSON Response text: {token_response.text}")
+            return Response({'error': 'Failed to parse JSON token response.'}, status=400)
 
-        token_data = token_response.json()
+        # Check for explicit errors in the GitHub response
+        if 'error' in token_data:
+            return Response({
+                'error': token_data['error'], 
+                'error_description': token_data.get('error_description', '')
+            }, status=400)
+
         access_token = token_data.get('access_token')
 
         if not access_token:
@@ -65,8 +77,37 @@ class GitHubCallbackView(APIView):
             }
         )
 
+        repos_response = requests.get(
+            'https://api.github.com/user/repos',
+            headers={
+                'Authorization': f'token {access_token}',
+                'Accept': 'application/json'
+            }
+        )
+
+        if repos_response.ok:
+            repos_data = repos_response.json()
+            for repo in repos_data:
+                is_group = repo['owner']['login'] != login
+                Project.objects.update_or_create(
+                    repo_id=str(repo['id']),
+                    defaults={
+                        'user': user,
+                        'name': repo.get('name', ''),
+                        'repo_full_name': repo.get('full_name', ''),
+                        'html_url': repo.get('html_url', ''),
+                        'is_group': is_group
+                    }
+                )
+
         refresh = RefreshToken.for_user(user)
         return Response({
             'refresh': str(refresh),
             'access': str(refresh.access_token),
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'avatar_url': avatar_url,
+                'github_id': github_id
+            }
         })
