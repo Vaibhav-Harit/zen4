@@ -1,4 +1,4 @@
-import { Github } from "lucide-react";
+import { GitBranch as Github } from "lucide-react";
 
 export default function ProjectCard({ project }) {
   return (
