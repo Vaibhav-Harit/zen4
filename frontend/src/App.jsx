@@ -2,7 +2,9 @@ import { Toaster } from "react-hot-toast";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import AuthCallback from "./AuthCallback";
 import EmptyState from "./components/EmptyState";
+import ProjectCard from "./components/ProjectCard";
 import ProjectSkeleton from "./components/ProjectSkeleton";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 
@@ -20,10 +22,18 @@ function App() {
       />
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/" element={<Dashboard />} />
-          
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+
           {/* TEMPORARY: test UI — remove once project list / empty state routing is wired */}
           <Route
             path="/dev"

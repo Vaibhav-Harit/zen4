@@ -1,28 +1,59 @@
 import axios from "axios";
 
-const api = axios.create({
+const axiosInstance = axios.create({
   baseURL: "http://localhost:8000",
 });
 
-api.interceptors.request.use(
+axiosInstance.interceptors.request.use(
   (config) => {
-    const accessToken = localStorage.getItem("snapit_access");
-
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
+    const token = localStorage.getItem("snapit_access");
+    if (token) {
+      config.headers.Authorization = "Bearer " + token;
     }
-
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-api.interceptors.response.use(
+axiosInstance.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // TODO: Add 401 refresh token logic here.
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry
+    ) {
+      originalRequest._retry = true;
+      const refreshToken = localStorage.getItem("snapit_refresh");
+
+      if (!refreshToken) {
+        localStorage.clear();
+        window.location.href = "/login";
+        return Promise.reject(error);
+      }
+
+      try {
+        const { data } = await axios.post(
+          "http://localhost:8000/api/auth/refresh/",
+          { refresh: refreshToken }
+        );
+
+        localStorage.setItem("snapit_access", data.access);
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers["Authorization"] = "Bearer " + data.access;
+
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
+        localStorage.clear();
+        window.location.href = "/login";
+        return Promise.reject(refreshError);
+      }
+    }
+
     return Promise.reject(error);
   }
 );
 
-export default api;
+export default axiosInstance;
