@@ -37,7 +37,6 @@ class GitHubCallbackView(APIView):
             print(f"[GITHUB OAUTH_DEBUG] Non-JSON Response text: {token_response.text}")
             return Response({'error': 'Failed to parse JSON token response.'}, status=400)
 
-        # Check for explicit errors in the GitHub response
         if 'error' in token_data:
             return Response({
                 'error': token_data['error'], 
@@ -63,7 +62,7 @@ class GitHubCallbackView(APIView):
         user_info = user_response.json()
         login = user_info.get('login')
         github_id = str(user_info.get('id'))
-        avatar_url = user_info.get('avatar_url')
+        avatar_url = user_info.get('avatar_url', "")
 
         if not login or not github_id:
             return Response({'error': 'Incomplete user info from GitHub'}, status=400)
