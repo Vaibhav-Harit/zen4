@@ -1,75 +1,128 @@
+import os
+import requests
+from django.contrib.auth.models import User
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework import status
-from django.conf import settings
-from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
-import requests
 from .models import UserProfile, Project
 from .serializers import ProjectSerializer
 
 class GitHubCallbackView(APIView):
     permission_classes = [AllowAny]
 
-    def post(self, request, *args, **kwargs):
-        code = request.data.get('code')
+    def _handle_oauth(self, code):
         if not code:
-            return Response({"error": "code not provided"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'No code provided'}, status=400)
 
-        token_url = "https://github.com/login/oauth/access_token"
-        token_data = {
-            "client_id": settings.GITHUB_CLIENT_ID,
-            "client_secret": settings.GITHUB_CLIENT_SECRET,
-            "code": code,
-        }
-        headers = {"Accept": "application/json"}
-        
-        token_response = requests.post(token_url, data=token_data, headers=headers)
-        if token_response.status_code != 200:
-            return Response({"error": "Failed to authenticate with GitHub"}, status=status.HTTP_400_BAD_REQUEST)
-            
-        token_json = token_response.json()
-        access_token = token_json.get("access_token")
-        
+        client_id = os.environ.get('GITHUB_CLIENT_ID', os.getenv('GITHUB_CLIENT_ID'))
+        client_secret = os.environ.get('GITHUB_CLIENT_SECRET', os.getenv('GITHUB_CLIENT_SECRET'))
+
+        print(f"[GITHUB OAUTH_DEBUG] Client ID present: {bool(client_id)} | Client Secret present: {bool(client_secret)}")
+
+        token_response = requests.post(
+            'https://github.com/login/oauth/access_token',
+            data={
+                'client_id': client_id,
+                'client_secret': client_secret,
+                'code': code,
+            },
+            headers={'Accept': 'application/json'}
+        )
+
+        try:
+            token_data = token_response.json()
+            print(f"[GITHUB OAUTH_DEBUG] Raw JSON Response: {token_data}")
+        except Exception:
+            print(f"[GITHUB OAUTH_DEBUG] Non-JSON Response text: {token_response.text}")
+            return Response({'error': 'Failed to parse JSON token response.'}, status=400)
+
+        if 'error' in token_data:
+            return Response({
+                'error': token_data['error'], 
+                'error_description': token_data.get('error_description', '')
+            }, status=400)
+
+        access_token = token_data.get('access_token')
+
         if not access_token:
-            return Response({"error": token_json.get('error_description', 'Invalid code')}, status=status.HTTP_400_BAD_REQUEST)
-            
-        user_url = "https://api.github.com/user"
-        user_headers = {"Authorization": f"Bearer {access_token}"}
-        user_response = requests.get(user_url, headers=user_headers)
-        
-        if user_response.status_code != 200:
-            return Response({"error": "Failed to fetch user data from GitHub"}, status=status.HTTP_400_BAD_REQUEST)
-            
-        user_data = user_response.json()
-        github_username = user_data.get("login")
-        github_id = str(user_data.get("id"))
-        avatar_url = user_data.get("avatar_url", "")
-        
-        if not github_username or not github_id:
-            return Response({"error": "GitHub user data incomplete"}, status=status.HTTP_400_BAD_REQUEST)
-            
-        user, created = User.objects.get_or_create(username=github_username)
+            return Response({'error': 'No access token in response'}, status=400)
+
+        user_response = requests.get(
+            'https://api.github.com/user',
+            headers={
+                'Authorization': f'Bearer {access_token}',
+                'Accept': 'application/json'
+            }
+        )
+
+        if not user_response.ok:
+            return Response({'error': 'Failed to fetch user info'}, status=400)
+
+        user_info = user_response.json()
+        login = user_info.get('login')
+        github_id = str(user_info.get('id'))
+        avatar_url = user_info.get('avatar_url', "")
+
+        if not login or not github_id:
+            return Response({'error': 'Incomplete user info from GitHub'}, status=400)
+
+        user, created = User.objects.get_or_create(username=login)
         if created:
             user.set_unusable_password()
             user.save()
-            
-        profile, profile_created = UserProfile.objects.get_or_create(
+
+        UserProfile.objects.update_or_create(
             user=user,
-            defaults={"github_id": github_id, "avatar_url": avatar_url}
+            defaults={
+                'github_id': github_id,
+                'avatar_url': avatar_url
+            }
         )
-        if not profile_created:
-            profile.github_id = github_id
-            profile.avatar_url = avatar_url
-            profile.save()
-            
+
+        repos_response = requests.get(
+            'https://api.github.com/user/repos',
+            headers={
+                'Authorization': f'token {access_token}',
+                'Accept': 'application/json'
+            }
+        )
+
+        if repos_response.ok:
+            repos_data = repos_response.json()
+            for repo in repos_data:
+                is_group = repo['owner']['login'] != login
+                Project.objects.update_or_create(
+                    repo_id=str(repo['id']),
+                    defaults={
+                        'user': user,
+                        'name': repo.get('name', ''),
+                        'repo_full_name': repo.get('full_name', ''),
+                        'html_url': repo.get('html_url', ''),
+                        'is_group': is_group
+                    }
+                )
+
         refresh = RefreshToken.for_user(user)
-        
         return Response({
-            "access": str(refresh.access_token),
-            "refresh": str(refresh)
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'avatar_url': avatar_url,
+                'github_id': github_id
+            }
         })
+
+    def get(self, request, *args, **kwargs):
+        code = request.GET.get('code')
+        return self._handle_oauth(code)
+
+    def post(self, request, *args, **kwargs):
+        code = request.data.get('code')
+        return self._handle_oauth(code)
+
 
 class ProjectsMeView(APIView):
     permission_classes = [IsAuthenticated]

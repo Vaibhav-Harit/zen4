@@ -1,9 +1,26 @@
-* {
-  box-sizing: border-box;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background-color: #060914; /* snap-950 */
+    color: #d9dbff; /* snap-100 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
 
-body {
-  margin: 0;
-  background: #f8fafc;
-  color: #0f172a;
+/* Glassmorphism utility (ProjectSkeleton, cards) */
+.glass-panel {
+  background: rgba(7, 10, 20, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.12);
 }

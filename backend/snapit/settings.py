@@ -11,13 +11,17 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load .env from backend/ directory (same level as manage.py)
+ENV_PATH = BASE_DIR / '.env'
+load_dotenv(str(ENV_PATH), override=True)
+print(f"[DOTENV_DEBUG] Loading .env from: {ENV_PATH} | Exists: {ENV_PATH.exists()}")
 
 
 # Quick-start development settings - unsuitable for production
@@ -42,8 +46,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rest_framework_simplejwt',
     'corsheaders',
+    'rest_framework_simplejwt',
     'api',
 ]
 
@@ -131,13 +135,20 @@ STATIC_URL = 'static/'
 
 # --- Hackathon / Snap.it Custom Settings ---
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
+CORS_ALLOW_ALL_ORIGINS = True
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated'
+    ]
 }
 
-from datetime import timedelta
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -146,6 +157,3 @@ SIMPLE_JWT = {
 # GitHub OAuth Credentials
 GITHUB_CLIENT_ID = os.getenv('GITHUB_CLIENT_ID')
 GITHUB_CLIENT_SECRET = os.getenv('GITHUB_CLIENT_SECRET')
-
-# Allow any frontend origin to connect during hackathon
-CORS_ALLOW_ALL_ORIGINS = True
