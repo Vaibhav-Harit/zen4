@@ -4,6 +4,7 @@ import AuthCallback from "./AuthCallback";
 import EmptyState from "./components/EmptyState";
 import ProjectSkeleton from "./components/ProjectSkeleton";
 import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
   return (
@@ -21,6 +22,8 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/" element={<Dashboard />} />
+          
           {/* TEMPORARY: test UI — remove once project list / empty state routing is wired */}
           <Route
             path="/dev"
@@ -35,7 +38,6 @@ function App() {
               </main>
             }
           />
-          <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
     </>
