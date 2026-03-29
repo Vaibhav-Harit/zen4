@@ -33,7 +33,7 @@ export default function Login() {
           initial={{ opacity: 0, y: 24, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="bg-[#121212]/60 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl p-10 flex flex-col items-center text-center max-w-md w-full mx-4 z-20 font-sans"
+          className="glass-panel max-w-md w-full mx-auto rounded-2xl p-10 z-20 flex flex-col items-center text-center font-sans"
         >
           <h1 className="text-6xl font-extrabold text-white">
   snap.it
