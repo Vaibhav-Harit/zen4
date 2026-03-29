@@ -1,6 +1,6 @@
 import { Toaster } from "react-hot-toast";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import AuthCallback from "./AuthCallback";
+import AuthCallback from "./pages/AuthCallback";
 import EmptyState from "./components/EmptyState";
 import ProjectCard from "./components/ProjectCard";
 import ProjectSkeleton from "./components/ProjectSkeleton";
