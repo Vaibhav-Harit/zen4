@@ -11,13 +11,12 @@ from .serializers import ProjectSerializer
 class GitHubCallbackView(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request, *args, **kwargs):
-        code = request.GET.get('code')
+    def _handle_oauth(self, code):
         if not code:
             return Response({'error': 'No code provided'}, status=400)
 
-        client_id = os.environ.get('GITHUB_CLIENT_ID')
-        client_secret = os.environ.get('GITHUB_CLIENT_SECRET')
+        client_id = os.environ.get('GITHUB_CLIENT_ID', os.getenv('GITHUB_CLIENT_ID'))
+        client_secret = os.environ.get('GITHUB_CLIENT_SECRET', os.getenv('GITHUB_CLIENT_SECRET'))
 
         print(f"[GITHUB OAUTH_DEBUG] Client ID present: {bool(client_id)} | Client Secret present: {bool(client_secret)}")
 
@@ -70,6 +69,10 @@ class GitHubCallbackView(APIView):
             return Response({'error': 'Incomplete user info from GitHub'}, status=400)
 
         user, created = User.objects.get_or_create(username=login)
+        if created:
+            user.set_unusable_password()
+            user.save()
+
         UserProfile.objects.update_or_create(
             user=user,
             defaults={
@@ -112,6 +115,14 @@ class GitHubCallbackView(APIView):
                 'github_id': github_id
             }
         })
+
+    def get(self, request, *args, **kwargs):
+        code = request.GET.get('code')
+        return self._handle_oauth(code)
+
+    def post(self, request, *args, **kwargs):
+        code = request.data.get('code')
+        return self._handle_oauth(code)
 
 
 class ProjectsMeView(APIView):
