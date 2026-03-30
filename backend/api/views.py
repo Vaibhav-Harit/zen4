@@ -145,7 +145,7 @@ class AnalyzeErrorView(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request, *args, **kwargs):
-        error_text = request.data.get('error_text', '')
+        error_text = request.data.get('error_text') or request.data.get('error_log', '')
         code_snippet = request.data.get('code_snippet', '')
         project_id = request.data.get('project_id', 'unknown')
         screenshot = request.FILES.get('screenshot')

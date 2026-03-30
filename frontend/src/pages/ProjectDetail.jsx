@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { processStream } from "../utils/streamDecoder";
 import { motion } from "framer-motion";
 import toast from 'react-hot-toast';
+import TerminalOutput from "../components/TerminalOutput";
 
 export default function ProjectDetail() {
   const { id } = useParams();
@@ -119,7 +120,7 @@ export default function ProjectDetail() {
 
         <div className="flex justify-end mb-8">
           <button
-            onClick={mockHandleSnapIt}
+            onClick={handleSnapIt}
             disabled={isAnalyzing || (!errorLog && !codeSnippet)}
             className="group relative px-8 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]"
           >
@@ -147,11 +148,7 @@ export default function ProjectDetail() {
                 AI Analysis Stream
               </h3>
             </div>
-            <div className="bg-[#0D0D0D] border border-white/10 rounded-xl p-6 overflow-x-auto">
-              <pre className="text-green-400 font-mono text-sm whitespace-pre-wrap leading-relaxed">
-                {streamedResponse}
-              </pre>
-            </div>
+            <TerminalOutput content={streamedResponse} />
           </motion.div>
         )}
       </motion.div>
