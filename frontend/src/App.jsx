@@ -5,16 +5,17 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ProjectDetail from "./pages/ProjectDetail";
+import { DemoProvider } from "./context/DemoContext";
 
 function App() {
   return (
-    <>
+    <DemoProvider>
       <Toaster
         position="top-right"
         toastOptions={{
           style: {
-            background: "#1f2937",
-            color: "#ffffff",
+            background: "#333",
+            color: "#fff",
           },
         }}
       />
@@ -39,9 +40,10 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/test/:id" element={<ProjectDetail />} />
         </Routes>
       </BrowserRouter>
-    </>
+    </DemoProvider>
   );
 }
 
