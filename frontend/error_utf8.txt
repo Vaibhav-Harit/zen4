@@ -1,0 +1,75 @@
+﻿
+> snapit-frontend@0.0.0 build
+> vite build
+
+[36mvite v5.4.21 [32mbuilding for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 2162 modules transformed.
+node.exe : [31mx[39m Build failed in 
+6.11s
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" 
+"C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecifie 
+   d: ([31mx[39m Build failed in 6.11s  
+  :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeComma 
+   ndError
+ 
+[31merror during build:
+[31msrc/components/ProjectCard.jsx 
+(1:9): "Github" is not exported by "node_m
+odules/lucide-react/dist/esm/lucide-react.
+js", imported by 
+"src/components/ProjectCard.jsx".[31m
+file: [36mC:/Users/GURU/OneDrive/Desktop/
+zen4/frontend/src/components/ProjectCard.j
+sx:1:9[31m
+[33m
+1: import { Github } from "lucide-react";
+            ^
+2: 
+3: export default function ProjectCard({ 
+project }) {
+[31m
+    at getRollupError (file:///C:/Users/GU
+RU/OneDrive/Desktop/zen4/frontend/node_mod
+ules/rollup/dist/es/shared/parseAst.js:406
+:41)
+    at error (file:///C:/Users/GURU/OneDri
+ve/Desktop/zen4/frontend/node_modules/roll
+up/dist/es/shared/parseAst.js:402:42)
+    at Module.error (file:///C:/Users/GURU
+/OneDrive/Desktop/zen4/frontend/node_modul
+es/rollup/dist/es/shared/node-entry.js:170
+65:16)
+    at Module.traceVariable (file:///C:/Us
+ers/GURU/OneDrive/Desktop/zen4/frontend/no
+de_modules/rollup/dist/es/shared/node-entr
+y.js:17477:29)
+    at ModuleScope.findVariable (file:///C
+:/Users/GURU/OneDrive/Desktop/zen4/fronten
+d/node_modules/rollup/dist/es/shared/node-
+entry.js:15090:39)
+    at FunctionScope.findVariable (file://
+/C:/Users/GURU/OneDrive/Desktop/zen4/front
+end/node_modules/rollup/dist/es/shared/nod
+e-entry.js:5676:38)
+    at FunctionBodyScope.findVariable (fil
+e:///C:/Users/GURU/OneDrive/Desktop/zen4/f
+rontend/node_modules/rollup/dist/es/shared
+/node-entry.js:5676:38)
+    at Identifier.bind (file:///C:/Users/G
+URU/OneDrive/Desktop/zen4/frontend/node_mo
+dules/rollup/dist/es/shared/node-entry.js:
+5450:40)
+    at CallExpression.bind (file:///C:/Use
+rs/GURU/OneDrive/Desktop/zen4/frontend/nod
+e_modules/rollup/dist/es/shared/node-entry
+.js:2828:28)
+    at CallExpression.bind (file:///C:/Use
+rs/GURU/OneDrive/Desktop/zen4/frontend/nod
+e_modules/rollup/dist/es/shared/node-entry
+.js:12199:15)[39m
