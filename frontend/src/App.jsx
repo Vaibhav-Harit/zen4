@@ -62,7 +62,7 @@ function App() {
               </main>
             }
           />
-          <Route path="/" element={<Navigate to="/project" replace />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
     </>
