@@ -1,0 +1,4 @@
+﻿A	frontend/build_error.log
+A	frontend/build_error_decoded.log
+M	frontend/src/App.jsx
+M	frontend/src/pages/ProjectDetail.jsx
