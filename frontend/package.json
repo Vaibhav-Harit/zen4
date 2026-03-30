@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.60.1",
     "@splinetool/react-spline": "^4.1.0",
     "axios": "^1.13.6",
     "canvas-confetti": "^1.9.4",
@@ -28,6 +29,7 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.27",
+    "caniuse-lite": "^1.0.30001782",
     "postcss": "^8.5.8",
     "tailwindcss": "^3.4.19",
     "vite": "^5.4.8"

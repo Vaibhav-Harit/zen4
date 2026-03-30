@@ -9,10 +9,11 @@ const LOGIN_SCENE_URL =
 export default function Login() {
   const [isLoading, setIsLoading] = useState(true);
   const handleGithubLogin = () => {
+    const redirectUri = `${window.location.origin}/auth/callback`;
     window.location.href =
       "https://github.com/login/oauth/authorize?client_id=" +
       import.meta.env.VITE_GITHUB_CLIENT_ID +
-      "&redirect_uri=http://localhost:5173/auth/callback";
+      "&redirect_uri=" + encodeURIComponent(redirectUri);
   };
 
   return (

@@ -19,6 +19,7 @@ from django.conf import settings
 
 class GitHubCallbackView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []  # Skip JWT auth entirely for this view
 
     def _handle_oauth(self, code):
         if not code:
@@ -95,7 +96,8 @@ class GitHubCallbackView(APIView):
             headers={
                 'Authorization': f'token {access_token}',
                 'Accept': 'application/json'
-            }
+            },
+            params={'per_page': 100, 'sort': 'updated'}
         )
 
         if repos_response.ok:

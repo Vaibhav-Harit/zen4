@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   History,
@@ -9,33 +9,28 @@ import ContextFeeder from "../components/ContextFeeder";
 import TerminalOutput from "../components/TerminalOutput";
 import ProjectCard from "../components/ProjectCard";
 import toast from "react-hot-toast";
-
-const mockProjects = [
-  {
-    id: 1,
-    name: "snapit-core",
-    repo_full_name: "user/snapit-core",
-    is_group: false,
-  },
-  {
-    id: 2,
-    name: "frontend-ui",
-    repo_full_name: "user/frontend-ui",
-    is_group: true,
-  },
-  {
-    id: 3,
-    name: "django-api",
-    repo_full_name: "user/django-api",
-    is_group: false,
-  },
-];
+import axiosInstance from "../api/axios";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [terminalContent, setTerminalContent] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
 
-  // Preserve production API streaming behavior from HEAD
+  // Fetch real projects from API on mount
+  useEffect(() => {
+    axiosInstance
+      .get("/api/projects/me/")
+      .then(({ data }) => setProjects(data))
+      .catch((err) => {
+        console.error("Failed to load projects:", err);
+        // Fall back to empty list – user see an empty state
+      })
+      .finally(() => setIsLoadingProjects(false));
+  }, []);
+
   const handleSnapSubmit = async ({ errorLogs, codeSnippet, screenshot }) => {
     setIsAnalyzing(true);
     setTerminalContent("");
@@ -44,9 +39,8 @@ export default function Dashboard() {
     try {
       const token = localStorage.getItem("snapit_access");
 
-      // Build FormData for multipart upload (supports screenshot)
       const formData = new FormData();
-      formData.append("error_log", errorLogs || "");
+      formData.append("error_text", errorLogs || "");
       formData.append("code_snippet", codeSnippet || "");
       formData.append("project_id", "dashboard");
       if (screenshot) {
@@ -65,7 +59,6 @@ export default function Dashboard() {
         throw new Error(`Analysis failed with status ${response.status}`);
       }
 
-      // Stream the SSE response
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
 
@@ -104,11 +97,12 @@ export default function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem("snapit_access");
     localStorage.removeItem("snapit_refresh");
-    window.location.href = "/login";
+    navigate("/login");
   };
 
   return (
     <div className="flex h-screen w-full bg-[#121212] text-white overflow-hidden">
+      {/* Sidebar */}
       <aside className="w-64 h-full border-r border-white/10 p-6 hidden md:flex flex-col relative z-20">
         <div className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent mb-8">
           snap.it
@@ -141,31 +135,51 @@ export default function Dashboard() {
         </nav>
       </aside>
 
+      {/* Main Content */}
       <main className="flex-1 p-8 h-full overflow-y-auto">
-        {/* Layout preserving Context Feeder and Terminal Structure from SIYA */}
+        {/* Snap Analysis Panel */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-12 items-stretch">
           <ContextFeeder onSubmit={handleSnapSubmit} isAnalyzing={isAnalyzing} />
           <div className="flex flex-col gap-0 min-h-[500px]">
-            <TerminalOutput 
-              content={terminalContent} 
+            <TerminalOutput
+              content={terminalContent}
               isThinking={isAnalyzing}
               onResolve={(isContributing) => {
-                console.log('User marked as resolved!', { isContributing });
-                setTerminalContent(prev => prev + `\n[ACTION] Bug marked as resolved. Contribution: ${isContributing}\n`);
+                toast.success(
+                  isContributing
+                    ? "Marked resolved & shared globally! 🌍"
+                    : "Marked as resolved! ✅"
+                );
               }}
             />
           </div>
         </div>
 
+        {/* Projects */}
         <h2 className="text-3xl font-bold mb-8 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
           Your Repositories
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
+        {isLoadingProjects ? (
+          <div className="flex justify-center items-center py-16">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500" />
+          </div>
+        ) : projects.length === 0 ? (
+          <div className="text-center py-16 text-gray-500">
+            <p className="text-lg">No repositories found.</p>
+            <p className="text-sm mt-2">
+              Login with GitHub to sync your repos, or use the Snap panel above.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {projects.map((project) => (
+              <div key={project.id} onClick={() => navigate(`/project/${project.id}`)}>
+                <ProjectCard project={project} />
+              </div>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
