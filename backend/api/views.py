@@ -4,13 +4,15 @@ from django.contrib.auth.models import User
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import UserProfile, Project
-from .serializers import ProjectSerializer
+from .models import UserProfile, Project, ErrorSnap
+from .serializers import ProjectSerializer, ErrorSnapSerializer
 import json
 from django.http import StreamingHttpResponse
 from rest_framework.parsers import MultiPartParser, FormParser
-from .rag_service import extract_text_from_image, analyze_with_rag_stream
+from .rag_service import extract_text_from_image, analyze_with_rag_stream, memorize_fix
+from .github_service import create_pull_request
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.conf import settings
@@ -83,6 +85,7 @@ class GitHubCallbackView(APIView):
             user=user,
             defaults={
                 'github_id': github_id,
+                'github_token': access_token,
                 'avatar_url': avatar_url
             }
         )
@@ -167,3 +170,87 @@ class AnalyzeErrorView(APIView):
                 yield f"data: {json.dumps(chunk)}\n\n"
 
         return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+class MemorizeFixView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        project_id = request.data.get('project_id')
+        error_text = request.data.get('error_text')
+        fixed_code = request.data.get('fixed_code')
+        is_global = request.data.get('is_global', False)
+
+        if not all([project_id, error_text, fixed_code]):
+            return Response({'error': 'Missing required fields'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Ensure project exists
+            project = Project.objects.get(id=project_id)
+            
+            # 1. Vector Storage (Pinecone)
+            memorize_fix(project_id, error_text, fixed_code, is_global=is_global)
+            
+            # 2. SQL Storage (History)
+            ErrorSnap.objects.create(
+                project=project,
+                error_text=error_text,
+                ai_fixed_code=fixed_code,
+                ai_explanation="Resolved via Snap.it AI and saved to memory."
+            )
+            return Response({'message': 'Memory saved successfully'}, status=status.HTTP_201_CREATED)
+        except Project.DoesNotExist:
+            return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class MySnapsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id):
+        try:
+            snaps = ErrorSnap.objects.filter(project_id=project_id).order_by('-created_at')
+            serializer = ErrorSnapSerializer(snaps, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+class CreatePRView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        project_id = request.data.get('project_id')
+        file_path = request.data.get('file_path')
+        fixed_code = request.data.get('fixed_code')
+        commit_message = request.data.get('commit_message', "Fix: Bug resolved via Snap.it AI")
+
+        if not all([project_id, file_path, fixed_code]):
+            return Response({'error': 'Missing required fields'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # 1. Get Project & Repo Info
+            project = Project.objects.get(id=project_id)
+            repo_full_name = project.repo_full_name
+
+            # 2. Get User GitHub Token
+            profile = request.user.profile
+            user_token = profile.github_token
+
+            if not user_token:
+                return Response({'error': 'GitHub token not found. Please re-login.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+            # 3. Call GitHub Service to create PR
+            pr_url = create_pull_request(
+                user_token=user_token,
+                repo_full_name=repo_full_name,
+                file_path=file_path,
+                fixed_code=fixed_code,
+                commit_message=commit_message
+            )
+
+            if pr_url:
+                return Response({'pr_url': pr_url}, status=status.HTTP_201_CREATED)
+            else:
+                return Response({'error': 'Failed to create PR'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except Project.DoesNotExist:
+            return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
