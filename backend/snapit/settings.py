@@ -157,3 +157,10 @@ SIMPLE_JWT = {
 # GitHub OAuth Credentials
 GITHUB_CLIENT_ID = os.getenv('GITHUB_CLIENT_ID')
 GITHUB_CLIENT_SECRET = os.getenv('GITHUB_CLIENT_SECRET')
+
+# Gemini API Key
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'your-placeholder-key-here')
+
+# Media files configuration
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
