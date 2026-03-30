@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import ContextFeeder from "../components/ContextFeeder";
 import TerminalOutput from "../components/TerminalOutput";
+import ResolutionPanel from "../components/ResolutionPanel";
 import {
   LayoutDashboard,
   History,
@@ -86,7 +87,17 @@ export default function Dashboard() {
         {/* Layout for Feeder Strategy and Terminal Output */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-12 items-stretch">
           <ContextFeeder onSubmit={handleSnapSubmit} />
-          <TerminalOutput content={terminalContent} isThinking={isThinking} />
+          <div className="flex flex-col gap-0">
+            <div className="flex-1 min-h-[500px]">
+              <TerminalOutput content={terminalContent} isThinking={isThinking} />
+            </div>
+            <ResolutionPanel 
+              onResolve={(isContributing) => {
+                console.log('User marked as resolved!', { isContributing });
+                setTerminalContent(prev => prev + `\n[ACTION] Bug marked as resolved. Contribution: ${isContributing}\n`);
+              }} 
+            />
+          </div>
         </div>
 
         <h2 className="text-3xl font-bold mb-8 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
