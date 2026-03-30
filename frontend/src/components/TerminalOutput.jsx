@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-const TerminalOutput = ({ content }) => {
+const TerminalOutput = ({ content, isThinking }) => {
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = () => {
@@ -16,13 +16,29 @@ const TerminalOutput = ({ content }) => {
   };
 
   return (
-    <div className="terminal-container rounded-lg overflow-hidden bg-[#1e1e1e] border border-gray-700 shadow-xl flex flex-col mt-4 mb-4 text-gray-100">
-      {/* Header Bar */}
-      <div className="flex justify-between items-center bg-[#252526] px-4 py-2 border-b border-gray-700">
-        <span className="text-sm font-semibold text-gray-300">Terminal</span>
+    <div className={`terminal-container rounded-xl overflow-hidden bg-[#0d1117] border border-white/10 shadow-xl flex flex-col h-full text-gray-100 transition-shadow duration-300 ${
+      isThinking ? 'shadow-[0_0_20px_rgba(168,85,247,0.2)]' : 'shadow-lg'
+    }`}>
+      {/* macOS-style Header Bar */}
+      <div className="flex justify-between items-center bg-[#161b22] px-4 py-3 border-b border-white/10 relative">
+        {/* Traffic Light Dots */}
+        <div className="flex gap-2">
+          <div className="w-3 h-3 rounded-full bg-red-500 shadow-inner"></div>
+          <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-inner"></div>
+          <div className="w-3 h-3 rounded-full bg-green-500 shadow-inner"></div>
+        </div>
+
+        {/* Centered Title */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="text-gray-400 text-sm font-semibold tracking-wide">
+            Neural Search Lab
+          </span>
+        </div>
+
+        {/* Copy Button */}
         <button
           onClick={handleCopy}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 relative z-10 ${
             isCopied 
               ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20' 
               : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700 hover:text-white'
@@ -47,50 +63,57 @@ const TerminalOutput = ({ content }) => {
       </div>
 
       {/* Terminal Output Body */}
-      <div className="terminal-output p-4 overflow-x-auto text-sm">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={{
-            code({ node, inline, className, children, ...props }) {
-              const match = /language-(\w+)/.exec(className || '');
-              return !inline && match ? (
-                <SyntaxHighlighter
-                  style={vscDarkPlus}
-                  language={match[1]}
-                  PreTag="div"
-                  {...props}
-                >
-                  {String(children).replace(/\n$/, '')}
-                </SyntaxHighlighter>
-              ) : !inline && !match ? (
-                <SyntaxHighlighter
-                  style={vscDarkPlus}
-                  language="text"
-                  PreTag="div"
-                  {...props}
-                >
-                  {String(children).replace(/\n$/, '')}
-                </SyntaxHighlighter>
-              ) : (
-                <code 
-                  className={className} 
-                  style={{ 
-                    backgroundColor: '#2d2d2d', 
-                    color: '#e6e6e6', 
-                    padding: '0.2rem 0.4rem', 
-                    borderRadius: '0.25rem',
-                    fontSize: '0.9em'
-                  }} 
-                  {...props}
-                >
-                  {children}
-                </code>
-              );
-            }
-          }}
-        >
-          {content}
-        </ReactMarkdown>
+      <div className="terminal-output p-5 flex-1 overflow-y-auto text-sm leading-relaxed">
+        {content ? (
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              code({ node, inline, className, children, ...props }) {
+                const match = /language-(\w+)/.exec(className || '');
+                return !inline && match ? (
+                  <SyntaxHighlighter
+                    style={vscDarkPlus}
+                    language={match[1]}
+                    PreTag="div"
+                    {...props}
+                  >
+                    {String(children).replace(/\n$/, '')}
+                  </SyntaxHighlighter>
+                ) : !inline && !match ? (
+                  <SyntaxHighlighter
+                    style={vscDarkPlus}
+                    language="text"
+                    PreTag="div"
+                    {...props}
+                  >
+                    {String(children).replace(/\n$/, '')}
+                  </SyntaxHighlighter>
+                ) : (
+                  <code 
+                    className={className} 
+                    style={{ 
+                      backgroundColor: '#2d2d2d', 
+                      color: '#e6e6e6', 
+                      padding: '0.2rem 0.4rem', 
+                      borderRadius: '0.25rem',
+                      fontSize: '0.9em'
+                    }} 
+                    {...props}
+                  >
+                    {children}
+                  </code>
+                );
+              }
+            }}
+          >
+            {content}
+          </ReactMarkdown>
+        ) : (
+          <span className="text-gray-500 font-mono">snap.it // Neural Search Lab v1.0.0{"\n"}Ready for input.{"\n"}</span>
+        )}
+        {isThinking && (
+          <div className="animate-pulse bg-green-400 w-2 h-5 inline-block ml-1 align-middle opacity-80" />
+        )}
       </div>
     </div>
   );

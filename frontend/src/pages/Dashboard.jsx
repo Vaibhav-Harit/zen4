@@ -1,11 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   LayoutDashboard,
   History,
   Settings,
   LogOut,
 } from "lucide-react";
+import ContextFeeder from "../components/ContextFeeder";
+import TerminalOutput from "../components/TerminalOutput";
 import ProjectCard from "../components/ProjectCard";
+import toast from "react-hot-toast";
 
 const mockProjects = [
   {
@@ -29,6 +32,80 @@ const mockProjects = [
 ];
 
 export default function Dashboard() {
+  const [terminalContent, setTerminalContent] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const handleSnapSubmit = async ({ errorLogs, codeSnippet, screenshot }) => {
+    setIsAnalyzing(true);
+    setTerminalContent("");
+    const toastId = toast.loading("Running Neural Search & OCR...");
+
+    try {
+      const token = localStorage.getItem("snapit_access");
+
+      // Build FormData for multipart upload (supports screenshot)
+      const formData = new FormData();
+      formData.append("error_log", errorLogs || "");
+      formData.append("code_snippet", codeSnippet || "");
+      formData.append("project_id", "dashboard");
+      if (screenshot) {
+        formData.append("screenshot", screenshot);
+      }
+
+      const response = await fetch("/api/errors/analyze/", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Analysis failed with status ${response.status}`);
+      }
+
+      // Stream the SSE response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const pieces = chunk.split("\n\n").filter((s) => s !== "");
+
+        for (const piece of pieces) {
+          const jsonText = piece.startsWith("data: ")
+            ? piece.slice("data: ".length)
+            : piece;
+          try {
+            const parsed = JSON.parse(jsonText);
+            setTerminalContent((prev) => prev + (parsed.chunk || ""));
+          } catch {
+            // Skip non-JSON chunks
+          }
+        }
+      }
+
+      toast.success("Snap complete!", { id: toastId });
+    } catch (error) {
+      console.error(error);
+      toast.error("Snap failed! " + error.message, { id: toastId });
+      setTerminalContent(
+        (prev) => prev + `\n\n❌ Error: ${error.message}\n`
+      );
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("snapit_access");
+    localStorage.removeItem("snapit_refresh");
+    window.location.href = "/login";
+  };
+
   return (
     <div className="flex h-screen w-full bg-[#121212] text-white overflow-hidden">
       <aside className="w-64 h-full border-r border-white/10 p-6 hidden md:flex flex-col relative z-20">
@@ -54,6 +131,7 @@ export default function Dashboard() {
 
           <button
             type="button"
+            onClick={handleLogout}
             className="mt-auto gap-3 flex items-center hover:text-[#8B5CF6] transition-colors cursor-pointer text-left"
           >
             <LogOut className="h-5 w-5 shrink-0" />
@@ -63,6 +141,14 @@ export default function Dashboard() {
       </aside>
 
       <main className="flex-1 p-8 h-full overflow-y-auto">
+        {/* Layout for Context Feeder and Terminal Output */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-12 items-stretch">
+          <ContextFeeder onSubmit={handleSnapSubmit} isAnalyzing={isAnalyzing} />
+          <div className="min-h-[500px]">
+            <TerminalOutput content={terminalContent} />
+          </div>
+        </div>
+
         <h2 className="text-3xl font-bold mb-8 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
           Your Repositories
         </h2>
