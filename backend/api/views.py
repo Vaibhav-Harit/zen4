@@ -7,6 +7,13 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import UserProfile, Project
 from .serializers import ProjectSerializer
+import json
+from django.http import StreamingHttpResponse
+from rest_framework.parsers import MultiPartParser, FormParser
+from .rag_service import extract_text_from_image, analyze_with_rag_stream
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from django.conf import settings
 
 class GitHubCallbackView(APIView):
     permission_classes = [AllowAny]
@@ -132,3 +139,32 @@ class ProjectsMeView(APIView):
         projects = Project.objects.filter(user=request.user)
         serializer = ProjectSerializer(projects, many=True)
         return Response(serializer.data)
+
+
+class AnalyzeErrorView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request, *args, **kwargs):
+        error_text = request.data.get('error_text', '')
+        code_snippet = request.data.get('code_snippet', '')
+        project_id = request.data.get('project_id', 'unknown')
+        screenshot = request.FILES.get('screenshot')
+
+        ocr_text = ""
+        if screenshot:
+            # Save screenshot temporarily
+            path = default_storage.save(f'tmp/{screenshot.name}', ContentFile(screenshot.read()))
+            full_path = os.path.join(settings.MEDIA_ROOT, path)
+            
+            # Extract text using Vision OCR
+            ocr_text = extract_text_from_image(full_path)
+            
+            # Clean up temp file
+            default_storage.delete(path)
+
+        def event_stream():
+            for chunk in analyze_with_rag_stream(error_text, code_snippet, ocr_text, project_id):
+                yield f"data: {json.dumps(chunk)}\n\n"
+
+        return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
