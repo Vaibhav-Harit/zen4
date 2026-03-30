@@ -4,6 +4,20 @@ import AuthCallback from "./AuthCallback";
 import EmptyState from "./components/EmptyState";
 import ProjectSkeleton from "./components/ProjectSkeleton";
 import Login from "./pages/Login";
+import ProjectDetail from "./pages/ProjectDetail"; // Added for routing
+import TerminalOutput from "./components/TerminalOutput"; // So user can preview it!
+
+// Placeholder markdown for previewing TerminalOutput
+const sampleMarkdown = `
+## Neural Search Result
+Here is the extracted code:
+\`\`\`javascript
+function helloWorld() {
+  console.log("Hello from snap.it!");
+}
+helloWorld();
+\`\`\`
+`;
 
 function App() {
   return (
@@ -21,6 +35,19 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          
+          {/* New Route for testing the Project UI Components */}
+          <Route path="/project" element={
+            <div className="bg-[#060914] min-h-screen text-white">
+              <ProjectDetail />
+              {/* Added TerminalOutput here to let you test the Smart Copy button! */}
+              <div className="p-8 max-w-4xl mx-auto">
+                <h2 className="text-xl font-bold mb-4 text-gray-300">Terminal Output Preview:</h2>
+                <TerminalOutput content={sampleMarkdown} />
+              </div>
+            </div>
+          } />
+
           {/* TEMPORARY: test UI — remove once project list / empty state routing is wired */}
           <Route
             path="/dev"
@@ -35,7 +62,7 @@ function App() {
               </main>
             }
           />
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<Navigate to="/project" replace />} />
         </Routes>
       </BrowserRouter>
     </>
