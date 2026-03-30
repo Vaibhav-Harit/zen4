@@ -7,6 +7,20 @@ import ProjectSkeleton from "./components/ProjectSkeleton";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import ProjectDetail from "./pages/ProjectDetail"; // Added for routing
+import TerminalOutput from "./components/TerminalOutput"; // So user can preview it!
+
+// Placeholder markdown for previewing TerminalOutput
+const sampleMarkdown = `
+## Neural Search Result
+Here is the extracted code:
+\`\`\`javascript
+function helloWorld() {
+  console.log("Hello from snap.it!");
+}
+helloWorld();
+\`\`\`
+`;
 
 function App() {
   return (
@@ -33,6 +47,18 @@ function App() {
               </ProtectedRoute>
             }
           />
+          
+          {/* New Route for testing the Project UI Components */}
+          <Route path="/project" element={
+            <div className="bg-[#060914] min-h-screen text-white">
+              <ProjectDetail />
+              {/* Added TerminalOutput here to let you test the Smart Copy button! */}
+              <div className="p-8 max-w-4xl mx-auto">
+                <h2 className="text-xl font-bold mb-4 text-gray-300">Terminal Output Preview:</h2>
+                <TerminalOutput content={sampleMarkdown} />
+              </div>
+            </div>
+          } />
 
           {/* TEMPORARY: test UI — remove once project list / empty state routing is wired */}
           <Route
