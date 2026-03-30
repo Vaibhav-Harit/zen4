@@ -7,6 +7,9 @@ import Dashboard from "./pages/Dashboard";
 import ProjectDetail from "./pages/ProjectDetail";
 import { DemoProvider } from "./context/DemoContext";
 
+import TestView from "./pages/TestView"; 
+import NotFound from "./pages/NotFound";
+
 function App() {
   return (
     <DemoProvider>
@@ -21,6 +24,7 @@ function App() {
       />
       <BrowserRouter>
         <Routes>
+          {/* Main Production Routes */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
@@ -40,7 +44,12 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/test/:id" element={<ProjectDetail />} />
+          
+          {/* UI Test Harness Paths */}
+          <Route path="/test" element={<TestView />} />
+          
+          {/* Fallback routing */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </DemoProvider>

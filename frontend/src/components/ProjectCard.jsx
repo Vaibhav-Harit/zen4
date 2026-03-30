@@ -1,4 +1,4 @@
-import { GitBranch as Github } from "lucide-react";
+import { GitBranch } from "lucide-react";
 
 export default function ProjectCard({ project }) {
   return (
@@ -21,7 +21,7 @@ export default function ProjectCard({ project }) {
       <p className="text-gray-400 text-sm truncate">{project.repo_full_name}</p>
 
       <div className="mt-auto flex justify-end">
-        <Github className="w-5 h-5 text-gray-500 group-hover:text-white transition-colors" />
+        <GitBranch className="w-5 h-5 text-gray-500 group-hover:text-white transition-colors" />
       </div>
     </div>
   );

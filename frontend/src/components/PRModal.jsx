@@ -1,36 +1,78 @@
 import React, { useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
-export default function PRModal({ prUrl, onClose }) {
+export default function PRModal({ isOpen, onClose, prUrl }) {
+
+  // Bringing in Anshika's confetti blast logic
   useEffect(() => {
-    confetti({
-      particleCount: 200,
-      spread: 120,
-      origin: { y: 0.5 },
-      colors: ['#a855f7', '#3b82f6'] // Matching the snap.it theme
-    });
-  }, []);
+    if (isOpen) {
+      confetti({
+        particleCount: 200,
+        spread: 120,
+        origin: { y: 0.5 },
+        colors: ['#a855f7', '#3b82f6', '#22c55e'] // Mixed theme colors
+      });
+    }
+  }, [isOpen]);
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 backdrop-blur-sm">
-      <div className="bg-[#121212] p-8 rounded-2xl border border-white/10 text-center space-y-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-300">
-        <div className="w-16 h-16 bg-green-500/10 text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h2 className="text-2xl font-extrabold text-white">PR Created!</h2>
-        <p className="text-gray-400">Your fix is ready for review on GitHub.</p>
-        <a href={prUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 font-mono bg-blue-500/10 px-4 py-2 rounded-lg hover:bg-blue-500/20 transition-colors block break-all">
-          {prUrl}
-        </a>
-        <button 
-          onClick={onClose} 
-          className="mt-6 w-full px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold transition-colors"
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         >
-          Close
-        </button>
-      </div>
-    </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="bg-gray-800 rounded-xl p-8 text-center max-w-sm w-full border border-gray-700 shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col items-center"
+          >
+            {/* Glowing Success Icon */}
+            <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.2)]">
+              <CheckCircle className="w-10 h-10 text-green-400 drop-shadow-[0_0_10px_rgba(34,197,94,0.8)]" />
+            </div>
+
+            {/* Modal Title */}
+            <h2 className="text-xl font-bold text-white mt-4 mb-2">
+              Pull Request Created Successfully!
+            </h2>
+
+            {/* Call to Actions */}
+            <div className="flex flex-col w-full gap-3 mt-6">
+              {prUrl ? (
+                <a
+                  href={prUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-300 hover:to-blue-400 text-white font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                >
+                  View PR on GitHub
+                </a>
+              ) : (
+                <button
+                  disabled
+                  className="w-full py-3 px-4 rounded-xl bg-gray-700 text-gray-400 font-bold cursor-not-allowed"
+                >
+                  Generating PR...
+                </button>
+              )}
+              
+              <button
+                onClick={onClose}
+                className="w-full py-3 px-4 rounded-xl text-gray-400 hover:text-white font-semibold transition-colors bg-transparent hover:bg-white/5"
+              >
+                Close
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

@@ -35,6 +35,7 @@ export default function Dashboard() {
   const [terminalContent, setTerminalContent] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  // Preserve production API streaming behavior from HEAD
   const handleSnapSubmit = async ({ errorLogs, codeSnippet, screenshot }) => {
     setIsAnalyzing(true);
     setTerminalContent("");
@@ -141,11 +142,18 @@ export default function Dashboard() {
       </aside>
 
       <main className="flex-1 p-8 h-full overflow-y-auto">
-        {/* Layout for Context Feeder and Terminal Output */}
+        {/* Layout preserving Context Feeder and Terminal Structure from SIYA */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-12 items-stretch">
           <ContextFeeder onSubmit={handleSnapSubmit} isAnalyzing={isAnalyzing} />
-          <div className="min-h-[500px]">
-            <TerminalOutput content={terminalContent} />
+          <div className="flex flex-col gap-0 min-h-[500px]">
+            <TerminalOutput 
+              content={terminalContent} 
+              isThinking={isAnalyzing}
+              onResolve={(isContributing) => {
+                console.log('User marked as resolved!', { isContributing });
+                setTerminalContent(prev => prev + `\n[ACTION] Bug marked as resolved. Contribution: ${isContributing}\n`);
+              }}
+            />
           </div>
         </div>
 
