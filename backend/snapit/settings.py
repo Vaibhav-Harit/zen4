@@ -39,6 +39,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -164,3 +165,18 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'your-placeholder-key-here')
 # Media files configuration
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+JAZZMIN_SETTINGS = {
+    "site_title": "snap.it AI Admin",
+    "site_header": "snap.it",
+    "site_brand": "snap.it Neural Matrix",
+    "welcome_sign": "Welcome to snap.it Core",
+    "copyright": "snap.it Development",
+    "search_model": ["auth.User", "api.Project"],
+    "show_ui_builder": False,
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "theme": "darkly",
+    "dark_mode_theme": "darkly",
+}

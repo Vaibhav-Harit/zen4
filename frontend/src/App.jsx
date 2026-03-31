@@ -6,7 +6,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ProjectDetail from "./pages/ProjectDetail";
 import { DemoProvider } from "./context/DemoContext";
-
+import CustomCursor from "./components/CustomCursor";
 import TestView from "./pages/TestView"; 
 import NotFound from "./pages/NotFound";
 
@@ -49,16 +49,20 @@ function App() {
 
   return (
     <DemoProvider>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          style: {
-            background: "#333",
-            color: "#fff",
-          },
-        }}
-      />
-      <BrowserRouter>
+      <CustomCursor>
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            style: {
+              background: "rgba(10, 15, 28, 0.8)",
+              backdropFilter: "blur(12px)",
+              color: "#fff",
+              border: "1px solid rgba(6, 182, 212, 0.2)",
+              boxShadow: "0 0 20px rgba(168, 85, 247, 0.2)"
+            },
+          }}
+        />
+        <BrowserRouter>
         <Routes>
           {/* Main Production Routes */}
           <Route path="/" element={<Navigate to="/login" replace />} />
@@ -88,6 +92,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      </CustomCursor>
     </DemoProvider>
   );
 }

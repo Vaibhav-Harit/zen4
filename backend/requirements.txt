@@ -10,3 +10,4 @@ langchain-google-genai
 pillow
 langchain-pinecone
 pinecone-client
+django-jazzmin
